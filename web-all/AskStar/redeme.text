@@ -1,0 +1,67 @@
+这个文件是用来记录开发的过程的
+
+2.28:稍微构思了一下
+
+2.29:抄了两个HTML(登入页面 注册页面),因为前端的知识还不是很了解.用datagrip搞了个数据库.
+
+3.1:完善了数据库中的表结构(其实还是不太好),将就着用.
+    建了pojo包,学到了lombok技术,用注解很轻松就建好了表的实体类.
+
+    JDBC技术(记录一下)
+    常用步骤:DriverManager注册驱动,获取Connection建立java和数据库的链接,
+    创建发送SQL语句的对象PrepareStatement,
+    发送并返回结果对象Resultset,解析返回结果.最后释放所有资源.
+    <不过感觉这样搞挺麻烦的说,所以在网上找了个工具类>
+
+    移植(抄)了一个JDBC工具类，用于管理数据库连接和连接池。
+    一开始看不懂,为了看懂我抄来个啥查了CSDN,问了AI,懂一些了
+    (记下没见过的东西)
+    ThreadLocal与常规的解决线程安全问题的方法(锁)不同
+    它的思路是为每一个线程都提供一份变量的副本，
+    从而实现同时访问而互不相干扰(多开了个空间来换取常规方法浪费的时间)
+    <猜想:这个东西似乎可以解决高并发的问题,当然这个问题目前与我无关>
+
+    DataSource其实是一个容器（集合），存放数据库连接的容器。
+    当系统的初始化完成后，容器被创建，容器中会申请一些连接对象
+    当用户访问数据库时，从容器中取出连接对象，当用户访问完后，将连接返回个容器。
+
+3.2:在test中测试dao层的几个实现类的时候报错了(如下)
+    java.sql.SQLSyntaxErrorException: You have an error in your SQL syntax;
+    经过查询似乎是因为password是sql的关键字,设计数据库的时候没注意,要回去修改.
+      11点59分:修改完成,但是依然报错(如下)
+    java.sql.SQLSyntaxErrorException: You have an error in your SQL syntax;\
+    check the manual that corresponds to your MySQL server version for the
+    right syntax to use near 'passwd from users' at line 1
+    因此不是关键字的原因
+      结果:检查多处后发现sql语法记错了,字段之间应该用(,)隔开,但是我用了空格.
+
+     DAO层基本完工
+
+3.3: 登入和注册功能完工,接下来就是填写和制作问卷的功能了
+     现在还没想到怎么把问卷显示出来,印象里好像还没学过这个技术,明天查查
+     累了,下班
+
+3.4:突击补习前端知识
+
+3.5:一直在尝试修复答案提交失败的bug
+
+3.7:终于!终于!终于!把bug给修了,真的是太一波三折了.第一次遇到这种一次错两处地方的bug
+导致我修理完第一处发现还是有问题,以为不是这里出了问题,就又改了回去.
+修理完第二处发现还是有问题,最后又把所有代码翻了几遍,疯狂打断点,加try语句测试.
+最终彻底明白了.以下是错误记录:
+    最开始是提交了答案,但是不管如何都提交失败,问题是因为我在将字符串转换为数字时使用了Integer.getInteger
+    (这个方法名取得太有误导性了),在检查后发现 Integer.getInteger 得到的结果居然是null !!
+    原来 Integer.getInteger 并不是将字符串转换为整数值,它的底层其实是调用了 System.getProperty ，
+    所以这个方法其实是获取系统的属性值。比如我们调用 Integer.getInteger("100") ，
+    其实底层是调用 System.getProperty("100"),但是因为系统中没有100这个属性，所以返回的就是null。
+    于是我换成了正确的方法parseInt(String),但是更奇怪了,提交答案之后服务器什么也没返回.
+    结果发现是代码出现异常,强行中断了,抛了InvocationTargetException和NumberFormatException
+    最终检查后发现 out.println(****value=\""+questionList.get(i).getQid()+"(这个位置多了个空格)\" />");
+    是的,居然是因为一个空格,字符串转换为数字时，如果字符串中包含非数字字符（例如字母、符号等),
+    就会抛出 NumberFormatException。
+
+3.9:项目基本完工,并且把密码加了个MD5加密算法.
+
+
+
+
